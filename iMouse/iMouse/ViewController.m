@@ -57,12 +57,15 @@
 
 -(void)outputAccelertionData:(CMAcceleration)acceleration
 {
+    
     double xAccel = acceleration.x*1000;
     double yAccel = acceleration.y*1000;
     double zAccel = acceleration.z*1000;
     
+
     self.accX.text = [NSString stringWithFormat:@" %.2f",xAccel];
-    NSLog(self.accX.text);
+    
+    // NSLog(self.accX.text);
     if(fabs(acceleration.x) > fabs(currentMaxAccelX))
     {
         currentMaxAccelX = acceleration.x;
@@ -83,14 +86,28 @@
     NSString* xDelta = @"0";
     NSString* yDelta = @"0";
     
-    if (fabs(xAccel) > 200)
+    if (( fabs(xAccel) > 200) || (( -850 < zAccel ) && ( zAccel < 0 )))
     {
-        xDelta = [@((int) (acceleration.x * 100)) stringValue];
+        
+        // If zAccel is negative, device is facing up
+        // Going left if xAccel is positive
+    
+        double xScale = (acceleration.x * 10) * (acceleration.x * 10) * acceleration.x;
+        
+        xDelta = [@((int) xScale) stringValue];
+        
     }
     
-    if (fabs(yAccel) > 200)
+    if (( fabs(yAccel) > 200) || (( -850 < zAccel ) && ( zAccel < 0 )))
     {
-        yDelta = [@((int) (acceleration.y * 100)) stringValue];
+        
+        // If zAccel is negative, device is facing up
+        // Going up if yAccel is negative
+        
+        double  yScale = (acceleration.y * 10) * (acceleration.y * 10) * (acceleration.y * 10);
+        
+        yDelta = [@((int) yScale) stringValue];
+        
     }
     
     if (fabs(acceleration.x) > 0.2 || fabs(acceleration.y) > 0.2)
@@ -124,13 +141,12 @@
         currentMaxRotZ = rotation.z;
     }
     
-    if (rotation.x < -3)
-    {
-        [self clickLeft];
-    }
+    // left click if z-rot positive
+    // right click if z-rot negative
     
-    if (rotation.y > 3)
-    {
+    if (rotation.z > 3) {
+        [self clickLeft];
+    } else if (rotation.z < -3) {
         [self clickRight];
     }
     
