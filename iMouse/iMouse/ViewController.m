@@ -168,7 +168,7 @@
 
 - (void)stream:(NSStream *)theStream handleEvent:(NSStreamEvent)streamEvent {
     
-    NSLog(@"stream event %lu", streamEvent);
+    NSLog(@"stream event %lu", (unsigned long)streamEvent);
     
     switch (streamEvent) {
             
@@ -191,7 +191,6 @@
                         if (nil != output) {
                             
                             NSLog(@"server said: %@", output);
-                            [self messageReceived:output];
                             
                         }
                     }

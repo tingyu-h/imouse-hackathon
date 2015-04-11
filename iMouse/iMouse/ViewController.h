@@ -63,7 +63,6 @@
 - (IBAction) sendLeft;
 - (IBAction) sendRight;
 - (void) initNetworkCommunication;
-- (void) messageReceived:(NSString *)message;
 
 - (IBAction)resetMaxValues:(id)sender;
 
