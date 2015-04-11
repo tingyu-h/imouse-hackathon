@@ -36,8 +36,8 @@
     currentMaxRotZ = 0;
     
     self.motionManager = [[CMMotionManager alloc] init];
-    self.motionManager.accelerometerUpdateInterval = .2;
-    self.motionManager.gyroUpdateInterval = .2;
+    self.motionManager.accelerometerUpdateInterval = .08;
+    self.motionManager.gyroUpdateInterval = .05;
     
     [self.motionManager startAccelerometerUpdatesToQueue:[NSOperationQueue currentQueue]
                                              withHandler:^(CMAccelerometerData  *accelerometerData, NSError *error) {
@@ -57,21 +57,45 @@
 
 -(void)outputAccelertionData:(CMAcceleration)acceleration
 {
+    double xAccel = acceleration.x*1000;
+    double yAccel = acceleration.y*1000;
+    double zAccel = acceleration.z*1000;
     
-    self.accX.text = [NSString stringWithFormat:@" %.2f",acceleration.x];
+    self.accX.text = [NSString stringWithFormat:@" %.2f",xAccel];
+    NSLog(self.accX.text);
     if(fabs(acceleration.x) > fabs(currentMaxAccelX))
     {
         currentMaxAccelX = acceleration.x;
     }
-    self.accY.text = [NSString stringWithFormat:@" %.2f",acceleration.y];
+    self.accY.text = [NSString stringWithFormat:@" %.2f",yAccel];
+    //NSLog(@"y: ", self.accY.text);
     if(fabs(acceleration.y) > fabs(currentMaxAccelY))
     {
         currentMaxAccelY = acceleration.y;
     }
-    self.accZ.text = [NSString stringWithFormat:@" %.2f",acceleration.z];
+    self.accZ.text = [NSString stringWithFormat:@" %.2f",zAccel];
+    //NSLog(@"z: ", self.accZ.text);
     if(fabs(acceleration.z) > fabs(currentMaxAccelZ))
     {
         currentMaxAccelZ = acceleration.z;
+    }
+    
+    NSString* xDelta = @"0";
+    NSString* yDelta = @"0";
+    
+    if (fabs(xAccel) > 200)
+    {
+        xDelta = [@((int) (acceleration.x * 100)) stringValue];
+    }
+    
+    if (fabs(yAccel) > 200)
+    {
+        yDelta = [@((int) (acceleration.y * 100)) stringValue];
+    }
+    
+    if (fabs(acceleration.x) > 0.2 || fabs(acceleration.y) > 0.2)
+    {
+        [self moveCursorWithX:xDelta andY:yDelta];
     }
     
     self.maxAccX.text = [NSString stringWithFormat:@" %.2f",currentMaxAccelX];
@@ -84,6 +108,7 @@
 {
     
     self.rotX.text = [NSString stringWithFormat:@" %.2fr/s",rotation.x];
+    //NSLog(self.rotX.text);
     if(fabs(rotation.x) > fabs(currentMaxRotX))
     {
         currentMaxRotX = rotation.x;
@@ -97,6 +122,16 @@
     if(fabs(rotation.z) > fabs(currentMaxRotZ))
     {
         currentMaxRotZ = rotation.z;
+    }
+    
+    if (rotation.x < -3)
+    {
+        [self clickLeft];
+    }
+    
+    if (rotation.y > 3)
+    {
+        [self clickRight];
     }
     
     self.maxRotX.text = [NSString stringWithFormat:@" %.2f",currentMaxRotX];
@@ -133,14 +168,20 @@
     
 }
 
+- (void) moveCursorWithX: (NSString*) xStr andY: (NSString*) yStr{
+    
+    NSString *response  = [NSString stringWithFormat:@"0,0,%@,%@,", xStr, yStr];
+    NSData *data = [[NSData alloc] initWithData:[response dataUsingEncoding:NSASCIIStringEncoding]];
+    [outputStream write:[data bytes] maxLength:[data length]];
+}
+
+
 // send move cursor command
 - (IBAction) sendMove {
     
     NSLog(@"move command is sent with: %@,%@", xDeltaField.text, yDeltaField.text);
+    [self moveCursorWithX:xDeltaField.text andY:yDeltaField.text];
     
-    NSString *response  = [NSString stringWithFormat:@"0,0,%@,%@", xDeltaField.text, yDeltaField.text];
-    NSData *data = [[NSData alloc] initWithData:[response dataUsingEncoding:NSASCIIStringEncoding]];
-    [outputStream write:[data bytes] maxLength:[data length]];
     xDeltaField.text = @"0";
     yDeltaField.text = @"0";
 }
@@ -150,7 +191,11 @@
     
     NSLog(@"Left command is sent.");
     
-    NSString *response  = [NSString stringWithFormat:@"1,0,0,0"];
+    [self clickLeft];
+}
+
+- (void) clickLeft {
+    NSString *response  = [NSString stringWithFormat:@"1,0,0,0,"];
     NSData *data = [[NSData alloc] initWithData:[response dataUsingEncoding:NSASCIIStringEncoding]];
     [outputStream write:[data bytes] maxLength:[data length]];
 }
@@ -160,7 +205,11 @@
     
     NSLog(@"Right command is sent.");
     
-    NSString *response  = [NSString stringWithFormat:@"0,1,0,0"];
+    [self clickRight];
+}
+
+- (void) clickRight {
+    NSString *response  = [NSString stringWithFormat:@"0,1,0,0,"];
     NSData *data = [[NSData alloc] initWithData:[response dataUsingEncoding:NSASCIIStringEncoding]];
     [outputStream write:[data bytes] maxLength:[data length]];
 }
